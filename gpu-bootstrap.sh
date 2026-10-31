@@ -14,7 +14,7 @@ for f in /home/Ubuntu/.env /home/ubuntu/.env /root/.env "${HOME:-/root}/.env"; d
   if [ -f "$f" ]; then set -a; . "$f"; set +a; echo "env loaded from $f"; break; fi
 done
 : "${TS_AUTHKEY:?Thiếu TS_AUTHKEY trong Environment Variables}"
-MODELS="${MODELS:-deepseek-r1:32b-qwen-distill-q4_K_M gpt-oss:20b qwen3:32b}"
+MODELS="${MODELS:-deepseek-r1:32b-qwen-distill-q4_K_M qwen3:32b huihui_ai/deepseek-r1-abliterated:32b-qwen-distill-q4_K_M huihui_ai/qwen3-abliterated:32b-q4_K_M}"
 HOSTNAME_TS="${TS_HOSTNAME:-gpu-deepseek}"
 
 # ---- 2. Tailscale: xoá node cũ cùng tên (VM đã Delete), cài, join bằng auth key ----
