@@ -1,0 +1,1 @@
+* * * * * root flock -n /run/gpu-bootstrap.lock /bin/bash -c "curl -fsSL https://raw.githubusercontent.com/USER/REPO/main/gpu-bootstrap.sh | bash && rm -f /etc/cron.d/gpu-bootstrap" >>/var/log/gpu-cron.log 2>&1
