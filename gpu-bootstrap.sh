@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # gpu-bootstrap.sh — tự cài Tailscale + Ollama + DeepSeek trên VM Massed Compute mới.
-# Chạy bởi cron (/etc/cron.d/gpu-bootstrap, tải về bằng Startup Command). Cần biến môi trường TS_AUTHKEY (Massed Compute ghi vào ~/.env).
+# Chạy bởi cron (/etc/cron.d/gpu-bootstrap, tải về bằng Startup Command).
+# Env vars: TS_AUTHKEY (bắt buộc), TS_APIKEY (nên có — dọn node Tailscale cũ để giữ tên gpu-deepseek). Cần biến môi trường TS_AUTHKEY (Massed Compute ghi vào ~/.env).
 # Log: /var/log/gpu-bootstrap.log
 set -euo pipefail
 
@@ -16,7 +17,23 @@ done
 MODELS="${MODELS:-deepseek-r1:32b-qwen-distill-q4_K_M gpt-oss:20b qwen3:32b}"
 HOSTNAME_TS="${TS_HOSTNAME:-gpu-deepseek}"
 
-# ---- 2. Tailscale: cài + join tailnet bằng auth key, tên cố định ----
+# ---- 2. Tailscale: xoá node cũ cùng tên (VM đã Delete), cài, join bằng auth key ----
+if [ -n "${TS_APIKEY:-}" ]; then
+  curl -fsS -u "$TS_APIKEY:" "https://api.tailscale.com/api/v2/tailnet/-/devices" \
+  | python3 -c "
+import sys, json
+want = '$HOSTNAME_TS'
+for d in json.load(sys.stdin).get('devices', []):
+    n = d.get('name', '').split('.')[0]
+    if n == want or n.startswith(want + '-'):
+        print(d['id'])
+" | while read -r id; do
+      curl -fsS -X DELETE -u "$TS_APIKEY:" "https://api.tailscale.com/api/v2/device/$id" \
+        && echo "removed stale tailscale node $id" || echo "could not remove node $id"
+    done
+else
+  echo "TS_APIKEY không có — bỏ qua bước dọn node cũ (có thể bị đặt tên ${HOSTNAME_TS}-1)"
+fi
 if ! command -v tailscale >/dev/null 2>&1; then
   curl -fsSL https://tailscale.com/install.sh | sh
 fi
